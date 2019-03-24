@@ -28,7 +28,7 @@ BATCH_SIZE = 32
 TEST_SIZE = 0.25
 COLOR_SCHEME_MULTIPLIER = 1     ## 1=grayscale, 3=rgb
 INIT_LR = 0.01          # initial learning rate
-EPOCHS = 75
+EPOCHS = 100
 
 # declare arrays for the data and labels
 data = []
