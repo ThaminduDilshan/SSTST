@@ -131,7 +131,8 @@ def detectHand(image_path):
             y_up = int(ymin*img_height)
             x_down = int(xmax*img_width)
             y_down = int(ymax*img_height)
-            absolute_coord.append((x_up, y_up, x_down, y_down))
+            # absolute_coord.append((x_up, y_up, x_down, y_down))         ## actual **
+            absolute_coord.append((x_up-20, y_up-20, x_down+20, y_down+20))
         i = i + 1
 
     bounding_box_img = []
