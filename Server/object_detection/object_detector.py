@@ -1,14 +1,10 @@
-### HAND DETECTION CODE ###
-### INPUT : IMAGE ###
-### OUTPUT : NUMBER OF DETECTED COUNT (IMAGE WILL BE SAVED IN MEMORY) ###
-
-
+import cv2
 import numpy as np
 import os
 import tensorflow as tf
 
 from distutils.version import StrictVersion
-from matplotlib import pyplot as plt
+# from matplotlib import pyplot as plt
 from PIL import Image
 
 from object_detection.utils import ops as utils_ops
@@ -20,28 +16,11 @@ if StrictVersion(tf.__version__) < StrictVersion('1.9.0'):
   raise ImportError('Please upgrade your TensorFlow installation to v1.9.* or later!')
 
 
-# model
-MODEL_NAME = 'hand_region_graph'
-PATH_TO_FROZEN_GRAPH = 'object_detection/' + MODEL_NAME + '/frozen_inference_graph.pb'
-
-# List of the strings that is used to add correct label for each box.
-PATH_TO_LABELS = os.path.join('object_detection/training', 'object-detection.pbtxt')
-
 # Size, in inches, of the output images.
 IMAGE_SIZE = (6, 8)   ## (6, 8)
+detection_graph = None
+category_index = None
 
-# Load a (frozen) Tensorflow model
-def loadModel():
-    detection_graph = tf.Graph()
-    with detection_graph.as_default():
-        od_graph_def = tf.GraphDef()
-        with tf.gfile.GFile(PATH_TO_FROZEN_GRAPH, 'rb') as fid:
-            serialized_graph = fid.read()
-            od_graph_def.ParseFromString(serialized_graph)
-            tf.import_graph_def(od_graph_def, name='')
-
-    category_index = label_map_util.create_category_index_from_labelmap(PATH_TO_LABELS, use_display_name=True)  # label map
-    return detection_graph, category_index
 
 # Function definitions
 def load_image_into_numpy_array(image):
@@ -98,32 +77,23 @@ def run_inference_for_single_image(image, graph):
 
 # Detection
 
-def detectHand(image_path):
-    detection_graph, category_index = loadModel()
+def detectHand(image, detection_gr, category_ind, threadname):
+    global detection_graph
+    global category_index
+    detection_graph = detection_gr
+    category_index = category_ind
 
-    image = Image.open(image_path)
+    # image = Image.open(image_path)
     image_np = load_image_into_numpy_array(image)
     image_np_expanded = np.expand_dims(image_np, axis=0)      ## Expand dimensions since the model expects images to have shape: [1, None, None, 3]
     output_dict = run_inference_for_single_image(image_np, detection_graph)
-        
-    # Visualization of the results of a detection.
-    vis_util.visualize_boxes_and_labels_on_image_array(
-        image_np,
-        output_dict['detection_boxes'],
-        output_dict['detection_classes'],
-        output_dict['detection_scores'],
-        category_index,
-        instance_masks=output_dict.get('detection_masks'),
-        use_normalized_coordinates=True,
-        line_thickness=1)
-    plt.figure(figsize=IMAGE_SIZE)
-    # plt.imshow(image_np)
+    # plt.figure(figsize=IMAGE_SIZE)
 
     # crop the detected regions (hands in image)
     img_height, img_width, img_channel = image_np.shape
-    absolute_coord = []
 
     i = 0
+    saved_count = 0
     for box in output_dict['detection_boxes']:          ## iterate through each detection box
         if output_dict['detection_scores'][i] > 0.5:        ## 0.5 is taken as the threshould
             ymin, xmin, ymax, xmax = box
@@ -131,39 +101,21 @@ def detectHand(image_path):
             y_up = int(ymin*img_height)
             x_down = int(xmax*img_width)
             y_down = int(ymax*img_height)
-            # absolute_coord.append((x_up, y_up, x_down, y_down))         ## actual **
-            absolute_coord.append((x_up-20, y_up-20, x_down+20, y_down+20))
+
+            try:                ## try to increase the detected region (if model accuracy is very high, no need for this step)
+                abs_coord = (x_up-20, y_up-20, x_down+20, y_down+20)
+                bounding_box_img = image_np[abs_coord[1]:abs_coord[3], abs_coord[0]:abs_coord[2], :]
+                new_img = Image.fromarray(bounding_box_img)      ## conversion to an image
+                new_img.save("slicedhand/{}#sliced_image{}.jpeg".format(threadname, i))
+                saved_count += 1
+            except:             ## if image margin exceeded, use original cropped image
+                abs_coord = (x_up, y_up, x_down, y_down)
+                bounding_box_img = image_np[abs_coord[1]:abs_coord[3], abs_coord[0]:abs_coord[2], :]
+                new_img = Image.fromarray(bounding_box_img)      ## conversion to an image
+                new_img.save("slicedhand/{}#sliced_image{}.jpeg".format(threadname, i))
+                saved_count += 1
+
         i = i + 1
-
-    bounding_box_img = []
-    for c in absolute_coord:
-        bounding_box_img.append(image_np[c[1]:c[3], c[0]:c[2], :])   ## height, width, color
-
-    # # returning detected regions in an array
-    # return bounding_box_img
-
-    for i in range(0, len(bounding_box_img), 1):
-        new_img = Image.fromarray(bounding_box_img[i])      ## conversion to an image
-        #plt.imshow(new_img)
-        new_img.save("slicedhand/sliced_image{}.jpeg".format(i))
-
-    ## return how many regions have detected
-    return len(bounding_box_img)
-
-
-
-
-
-# ## just for the visualization
-
-# f = plt.figure()
-
-# f.add_subplot(1, 2, 1)
-# img1 = Image.fromarray(bounding_box_img[0])
-# plt.imshow(img1)
-
-# f.add_subplot(1,2, 2)
-# img2 = Image.fromarray(bounding_box_img[1])
-# plt.imshow(img2)
-
-# plt.show(block=True)
+    # plt.clf()
+    
+    return saved_count
