@@ -8,6 +8,11 @@ import { VideoEditor } from '@ionic-native/video-editor';
 import { File } from '@ionic-native/file/ngx';
 import { IonicStorageModule } from '@ionic/storage';
 import { TextToSpeech } from '@ionic-native/text-to-speech/ngx';
+import { FileTransfer } from '@ionic-native/file-transfer/ngx';
+import { UniqueDeviceID } from '@ionic-native/unique-device-id/ngx';
+import { Toast } from '@ionic-native/toast';
+import { Base64 } from '@ionic-native/base64';
+import { HttpModule } from '@angular/http';
 
 import { MyApp } from './app.component';
 import { HomePage } from '../pages/home/home';
@@ -20,7 +25,8 @@ import { HomePage } from '../pages/home/home';
   imports: [
     BrowserModule,
     IonicModule.forRoot(MyApp),
-    IonicStorageModule.forRoot()
+    IonicStorageModule.forRoot(),
+    HttpModule
   ],
   bootstrap: [IonicApp],
   entryComponents: [
@@ -32,8 +38,12 @@ import { HomePage } from '../pages/home/home';
     SplashScreen,
     MediaCapture,
     VideoEditor,
+    FileTransfer,
     File,
     TextToSpeech,
+    UniqueDeviceID,
+    Toast,
+    Base64,
     {provide: ErrorHandler, useClass: IonicErrorHandler}
   ]
 })

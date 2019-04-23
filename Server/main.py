@@ -1,5 +1,10 @@
+#!/usr/bin/env python3
 
-from queue import Queue
+try:
+	from queue import Queue
+except ImportError:
+	import Queue
+
 import flask
 import threading
 import predict_input as pred
@@ -11,6 +16,7 @@ import pickle
 import os
 from datetime import datetime
 from datetime import timedelta
+from base64 import b64decode;
 
 
 # variable definition
@@ -137,8 +143,10 @@ def create_cleaner():
 @app.route('/predict', methods=["POST"])
 def serve():
     if flask.request.method == "POST":
+        print("=== TESTING : DATA RECEIVED === \n", flask.request.files)
+
         if flask.request.files.get('image'):
-            tasks.put( (flask.request.files["client_id"].read().decode('utf-8'), flask.request.files["image"].read(), flask.request.files["image_name"].read().decode('utf-8')) )
+            tasks.put( (flask.request.files["client_id"].read().decode('utf-8'), b64decode(flask.request.files["image"].read()), flask.request.files["image_name"].read().decode('utf-8')) )
             
             return flask.jsonify(("received"))
 

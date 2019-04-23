@@ -106,13 +106,13 @@ def detectHand(image, detection_gr, category_ind, threadname):
                 abs_coord = (x_up-20, y_up-20, x_down+20, y_down+20)
                 bounding_box_img = image_np[abs_coord[1]:abs_coord[3], abs_coord[0]:abs_coord[2], :]
                 new_img = Image.fromarray(bounding_box_img)      ## conversion to an image
-                new_img.save("slicedhand/{}#sliced_image{}.jpeg".format(threadname, i))
+                new_img.save("../slicedhand/{}#sliced_image{}.jpeg".format(threadname, i))
                 saved_count += 1
             except:             ## if image margin exceeded, use original cropped image
                 abs_coord = (x_up, y_up, x_down, y_down)
                 bounding_box_img = image_np[abs_coord[1]:abs_coord[3], abs_coord[0]:abs_coord[2], :]
                 new_img = Image.fromarray(bounding_box_img)      ## conversion to an image
-                new_img.save("slicedhand/{}#sliced_image{}.jpeg".format(threadname, i))
+                new_img.save("../slicedhand/{}#sliced_image{}.jpeg".format(threadname, i))
                 saved_count += 1
 
         i = i + 1

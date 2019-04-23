@@ -3,6 +3,7 @@ import cv2
 from keras.models import load_model
 from object_detection import object_detector
 from PIL import Image
+from PIL import ImageFile
 import voicescript_map as vmap
 import io
 import tensorflow as tf
@@ -47,6 +48,7 @@ def make_prediction(image_path, tname, image_name):
 
 # predict for a client request (if more than one detections from object detector, add the prediction with the highest accuracy)
 def predict_request(client_id, image, threadname, image_name, output_dat, output_lock):
+    ImageFile.LOAD_TRUNCATED_IMAGES = True
     image = Image.open(io.BytesIO(image))
 
     # detect and crop hand region
@@ -57,12 +59,12 @@ def predict_request(client_id, image, threadname, image_name, output_dat, output
     accuracy = 0
 
     if(detected_count==1):
-        pr_acc = make_prediction("slicedhand/{}#sliced_image0.jpeg".format(threadname), threadname, image_name)
+        pr_acc = make_prediction("../slicedhand/{}#sliced_image0.jpeg".format(threadname), threadname, image_name)
         pred = pr_acc[0].strip()
         accuracy = pr_acc[1].strip()
     elif(detected_count>1):                         # if two hands captured, select the hand with highest accuracy
-        pred1 = make_prediction("slicedhand/{}#sliced_image0.jpeg".format(threadname), threadname, image_name)
-        pred2 = make_prediction("slicedhand/{}#sliced_image1.jpeg".format(threadname), threadname, image_name)
+        pred1 = make_prediction("../slicedhand/{}#sliced_image0.jpeg".format(threadname), threadname, image_name)
+        pred2 = make_prediction("../slicedhand/{}#sliced_image1.jpeg".format(threadname), threadname, image_name)
 
         if( pred1[1] >= pred2[1] ):
             pred = pred1[0].strip()

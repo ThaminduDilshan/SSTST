@@ -15,5 +15,7 @@
       <p>{{file.size/1000/1000 | number}} MB</p>
     </ion-item>
   </ion-list>
-  <video controls autoplay #myvideo (loadedmetadata)="getDurationandFrame($event)"></video>
+  <video controls autoplay #myvideo (loadedmetadata)="getExecute($event)"></video>
+  <br/>
+  <!-- <button ion-button full (click)="translate()">Translate</button> -->
 </ion-content>
