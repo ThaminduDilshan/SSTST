@@ -3,7 +3,7 @@ import { NavController } from 'ionic-angular';
 import { Subscription } from 'rxjs/Subscription';
 import { MediaCapture, CaptureVideoOptions, MediaFile } from '@ionic-native/media-capture';
 import { VideoEditor, CreateThumbnailOptions } from '@ionic-native/video-editor';
-import { UniqueDeviceID } from '@ionic-native/unique-device-id/ngx';
+import { UniqueDeviceID } from '@ionic-native/unique-device-id';
 import { FileTransfer, FileUploadOptions, FileTransferObject } from '@ionic-native/file-transfer/ngx';
 import { File } from '@ionic-native/file/ngx';
 import { Toast } from '@ionic-native/toast';
@@ -21,7 +21,7 @@ import 'rxjs/add/operator/toPromise';
 })
 @Injectable()
 export class HomePage {
-  private client_id: string = 'client_test';
+  private client_id: string;
   
   @ViewChild('myvideo') myvideo: any;
   // mediaFiles = [];
@@ -31,8 +31,9 @@ export class HomePage {
   videoDuration: any;
   noOfFrames: number = 0;
   thumbnailPath: string = null;
-  // thumbnailPath: Observable<{}>;
   isVideoSelected: boolean = false;
+  
+  frame_requests: string [] = [];     // sent image_names will be here
 
   constructor(public navCtrl: NavController, private mediaCapture: MediaCapture,
     private videoEditor: VideoEditor, private uniqueDeviceID: UniqueDeviceID,
@@ -43,19 +44,13 @@ export class HomePage {
   }
 
   ionViewDidLoad() {
-    // this.isVideoSelected = false;
-
-    // /*
-    //       PLEASE CHECK IF THIS IS ONE TIME ID OR UNIQUE FOR DEVICE
-    // */
-
-    // // get an id to uniquely identify client in the server
-    // this.uniqueDeviceID.get().then( (uuid) => {
-    //   console.log("Client ID : ", uuid);
-    //   this.client_id = uuid;
-    // }).catch( (err) => {
-    //   console.log("Client ID Error : ", err);
-    // });
+    // get an id to uniquely identify client in the server
+    this.uniqueDeviceID.get().then( (uuid) => {
+      console.log("Client ID : ", uuid);
+      this.client_id = uuid;
+    }).catch( (err) => {
+      console.log("Client ID Error : ", err);
+    });
 
   }
 
@@ -101,7 +96,6 @@ export class HomePage {
           console.log("[INFO] called getDurationandFrame() : thumbnail : " + i);
             console.log('Thumbnail result: ' + res);
             this.thumbnailPath = res;
-            // var base64 = this.readFile();
         }).catch(err=>{
           console.log("Framing Error", err)
         });
@@ -130,16 +124,11 @@ export class HomePage {
     
   }
 
-  //////////////////////////////////////////////////////////////////////////////
-  //////////////////////////////////////////////////////////////////////////////
-
 
   delay(ms: number) {
     return new Promise( resolve => setTimeout(resolve, ms) );
   }
 
-
-  
 
   async uploadImage_Json(image, image_name) {
     console.log("uploadImage_Json : check 01 : ", image_name);
@@ -154,14 +143,6 @@ export class HomePage {
         image_name: image_name
       }
     );
-
-    // let data = JSON.stringify(
-    //   {
-    //     client_id: 'client_test',
-    //     image: 'img_test_jsondata',
-    //     image_name: 'image_name_test'
-    //   }
-    // );
 
     let options = new RequestOptions({headers: headers});
 
@@ -182,41 +163,20 @@ export class HomePage {
   }
 
 
-
-
   async readFile(filepath, filename) {
     console.log("[INFO] called readFile()");
 
     return new Promise(async resolve => {
       console.log("[INFO] called readFile() : inside Promise");
       this.base64.encodeFile(filepath+'/'+filename+'.jpg').then(async (base64String: string) => {
-        let imageSrc = base64String.split(",");
-        // console.log("---Splitted image string 1 ----", imageSrc[1]);
-        // return await imageSrc[1];
-        resolve(imageSrc[1]);
+        let imageSrc = [ base64String.split(",")[1] , filename];
+        resolve(imageSrc);
       });
     });
 
     
   }
   
-
-
-  // getPathandName(txt:string) {
-  //     var arr = txt.split('/');
-  //     var filename = arr.pop();
-      
-  //     var path = '';
-  //     for(var i=1; i<arr.length; i++) {
-  //       path = path + '/' + arr[i];
-  //     }
-  //     path = path + '/';
-  
-  //     console.log('name : ', filename);
-  //     return {path, filename};
-    
-  // }
-
 
   async readImages() {
     console.log("[INFO] called readImages()");
@@ -229,10 +189,6 @@ export class HomePage {
     }
     path = path + '/';
 
-    // path shoud get using above way. But unfortunately thumbnailPath variable ended up being undefined.
-    // So have to hard code it
-    // var path = '/storage/emulated/0/Android/data/io.ionic.starter/files/files/videos';
-
     // read content on each image
     for(var i=0; i<this.noOfFrames; i++) {
       console.log("[INFO] called readImages() : for : "+i);
@@ -240,12 +196,13 @@ export class HomePage {
 
       var result;
       this.readFile(path, img_name).then(async res => {
-        result = res;
-        // console.log("IMAGE BASE 64 (inside)", result);
-        if(res===undefined) {
-          console.log("============ undefined =============")
+        result = res[0];
+        var res_img_name = res[1];
+        console.log("IMAGE BASE 64 (inside)", result[0]);
+        if(result===undefined) {
+          console.log("undefined")
         } else {
-          await this.uploadImage_Json(result, img_name);
+          await this.uploadImage_Json(result, res_img_name);
         }
         
       });
@@ -256,39 +213,13 @@ export class HomePage {
   }
 
 
+
+
+
   // textToSpeech(text:string) {
   //   this.tts.speak(text).then(() => console.log('Success'))
   //       .catch((reason: any) => console.log(reason));
   // }
-
-
-
-  async translate() {
-    console.log("[INFO] called translate()");
-    if(!this.isVideoSelected) {       // check if a video is selected
-      this.toast.show('Please select a video', '3000', 'bottom').subscribe(
-        toast => console.log(toast)
-      );
-    } else {        // if a video selected
-      // (async () => {
-        console.log("[INFO] called translate() : else : ");
-        if( Number(this.videoDuration) == this.noOfFrames ){
-          console.log("[INFO] called translate() : else : if ");
-          this.toast.show(this.thumbnailPath, '3000', 'top').subscribe(
-            toast => console.log(toast)
-          );
-  
-          this.readImages();
-        } else {
-          this.toast.show('Wait until processing finish', '2000', 'bottom').subscribe(
-            toast => console.log(toast)
-          );
-        }
-        
-      // })();
-    }
-
-  }
   
 
 }

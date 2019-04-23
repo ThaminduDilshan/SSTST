@@ -9,7 +9,7 @@ import { File } from '@ionic-native/file/ngx';
 import { IonicStorageModule } from '@ionic/storage';
 import { TextToSpeech } from '@ionic-native/text-to-speech/ngx';
 import { FileTransfer } from '@ionic-native/file-transfer/ngx';
-import { UniqueDeviceID } from '@ionic-native/unique-device-id/ngx';
+import { UniqueDeviceID } from '@ionic-native/unique-device-id';
 import { Toast } from '@ionic-native/toast';
 import { Base64 } from '@ionic-native/base64';
 import { HttpModule } from '@angular/http';

@@ -16,7 +16,8 @@ import pickle
 import os
 from datetime import datetime
 from datetime import timedelta
-from base64 import b64decode;
+from base64 import b64decode
+import json
 
 
 # variable definition
@@ -143,12 +144,27 @@ def create_cleaner():
 @app.route('/predict', methods=["POST"])
 def serve():
     if flask.request.method == "POST":
-        print("=== TESTING : DATA RECEIVED === \n", flask.request.files)
+        rec_data = json.loads(flask.request.data.decode('utf-8'))
+        if 'image' in rec_data:
+            print("New Request => client id: " + rec_data['client_id'] + " | image_name: " + rec_data['image_name'])
 
-        if flask.request.files.get('image'):
-            tasks.put( (flask.request.files["client_id"].read().decode('utf-8'), b64decode(flask.request.files["image"].read()), flask.request.files["image_name"].read().decode('utf-8')) )
-            
+            print("\n===================================================")
+            print(b64decode(rec_data['image']))
+            print("===================================================\n")
+
+            tasks.put( ( rec_data['client_id'], b64decode(rec_data['image']), rec_data['image_name'] ) )
+
             return flask.jsonify(("received"))
+
+
+            # if flask.request.data.get('image'):
+                # tasks.put( (flask.request.files["client_id"].read().decode('utf-8'), b64decode(flask.request.files["image"].read()), flask.request.files["image_name"].read().decode('utf-8')) )
+                # print("client id : ", flask.request.data["client_id"].read().decode('utf-8'))
+                # print("image : ", flask.request.data["image"].read())
+                # print("image name : ", flask.request.data["image_name"].read().decode('utf-8'))
+
+                # tasks.put( (flask.request.data["client_id"].read().decode('utf-8'), b64decode(flask.request.data["image"].read()), flask.request.data["image_name"].read().decode('utf-8')) )
+
 
 
 # route for checking prediction results
