@@ -18,6 +18,7 @@ from datetime import datetime
 from datetime import timedelta
 from base64 import b64decode
 import json
+import voicescript_map as v_map
 
 
 # variable definition
@@ -148,22 +149,10 @@ def serve():
         if 'image' in rec_data:
             print("New Request => client id: " + rec_data['client_id'] + " | image_name: " + rec_data['image_name'])
 
-            print("\n===================================================")
-            print(b64decode(rec_data['image']))
-            print("===================================================\n")
-
             tasks.put( ( rec_data['client_id'], b64decode(rec_data['image']), rec_data['image_name'] ) )
 
-            return flask.jsonify(("received"))
-
-
-            # if flask.request.data.get('image'):
-                # tasks.put( (flask.request.files["client_id"].read().decode('utf-8'), b64decode(flask.request.files["image"].read()), flask.request.files["image_name"].read().decode('utf-8')) )
-                # print("client id : ", flask.request.data["client_id"].read().decode('utf-8'))
-                # print("image : ", flask.request.data["image"].read())
-                # print("image name : ", flask.request.data["image_name"].read().decode('utf-8'))
-
-                # tasks.put( (flask.request.data["client_id"].read().decode('utf-8'), b64decode(flask.request.data["image"].read()), flask.request.data["image_name"].read().decode('utf-8')) )
+            response = "received:" + rec_data['image_name']
+            return flask.jsonify((response))
 
 
 
@@ -171,15 +160,41 @@ def serve():
 @app.route('/check', methods=["POST"])
 def ifDone():
     if flask.request.method == "POST":
-        cli_id = flask.request.files["client_id"].read().decode('utf-8')
-        img_name = flask.request.files["image_name"].read().decode('utf-8')
+        rec_data = json.loads(flask.request.data.decode('utf-8'))
+        cli_id = rec_data['client_id']
+        img_name = rec_data['image_name']
+
+        print("Processed Request => client id: " + cli_id + " | image_name: " + img_name)
 
         pro_data_lock.acquire()
         ret = processed_data.get(cli_id + '$' + img_name, 'wait')
         if not ret == 'wait':
             del processed_data[cli_id + '$' + img_name]
+            if float(ret[2]) >= 40:         # prediction is equal more than 40%
+                # voice = v_map.getScript(ret[1])
+                ret = (img_name, ret[1])
+            else:
+                ret = (img_name, 'none')
+
         pro_data_lock.release()
+
         return flask.jsonify(ret)
+
+
+
+# route for checking prediction results
+@app.route('/voice', methods=["POST"])
+def getVoiceScript():
+    if flask.request.method == "POST":
+        rec_data = json.loads(flask.request.data.decode('utf-8'))
+        cli_id = rec_data['client_id']
+        text = rec_data['text']
+
+        print("Voice Request => client id: " + cli_id)
+        voice = v_map.getScript(text)
+
+        return flask.jsonify(voice)
+
 
 
 

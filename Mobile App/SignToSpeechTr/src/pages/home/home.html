@@ -17,5 +17,11 @@
   </ion-list>
   <video controls autoplay #myvideo (loadedmetadata)="getExecute($event)"></video>
   <br/>
-  <!-- <button ion-button full (click)="translate()">Translate</button> -->
+  <button ion-button full (click)="evaluate()" [disabled]="videoDuration > noOfFrames">Translate</button>
+  <br/>
+  <ion-card *ngIf="pred_text_all!=''">
+    <div>{{pred_text_all}}</div>
+  </ion-card>
+  <button ion-button (click)="playVoice()" [disabled]="pred_voice_all == ''">Play</button>
+  
 </ion-content>

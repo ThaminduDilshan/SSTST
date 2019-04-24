@@ -9,15 +9,15 @@ def loadMapping():           # loads the mapping from sinhala-textscript.csv
                 voiceMap[line.split(',')[0]] = line.split(',')[1]
 
 
-def getScript(inpString):       # returns voicescript for given input string (seperated by '$' sign)
+def getScript(inpString):       # returns voicescript for given input string (seperated by an empty space)
     output = ''
 
     loadMapping()
 
-    for word in inpString.split('$'):
-        output += voiceMap.get(word.strip(), '') + ' $ '                     # HAVE TO REMOVE WHITESPACES USED WITH $ CHARACTER
+    for word in inpString.split(' '):
+        output += voiceMap.get(word.strip(), '') + ' , '
     return output
-
+ 
 
 def addToMap(word, script):         # add new entry to csv file
     text = word + ', ' + script

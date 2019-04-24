@@ -7,7 +7,7 @@ import { MediaCapture } from '@ionic-native/media-capture';
 import { VideoEditor } from '@ionic-native/video-editor';
 import { File } from '@ionic-native/file/ngx';
 import { IonicStorageModule } from '@ionic/storage';
-import { TextToSpeech } from '@ionic-native/text-to-speech/ngx';
+import { TextToSpeech } from '@ionic-native/text-to-speech';
 import { FileTransfer } from '@ionic-native/file-transfer/ngx';
 import { UniqueDeviceID } from '@ionic-native/unique-device-id';
 import { Toast } from '@ionic-native/toast';
