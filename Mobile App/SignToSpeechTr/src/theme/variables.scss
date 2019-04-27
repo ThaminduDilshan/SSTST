@@ -22,8 +22,19 @@ $app-direction: ltr;
 // To view all the possible Ionic variables, see:
 // http://ionicframework.com/docs/theming/overriding-ionic-variables/
 
+// ion-content {
+//   background: url("../assets/imgs/number-chart-1-10.jpg") no-repeat center center fixed;
+//   background-size: cover;
+//   opacity: 0.7;
+// }
+// $body-bg: transparent;
 
-
+$toolbar-md-title-text-color: rgb(255, 252, 238);
+$toolbar-ios-title-text-color: rgb(255, 252, 238);
+$toolbar-wp-title-text-color: rgb(255, 252, 238);
+$toolbar-md-title-font-weight: bolder;
+$toolbar-ios-title-font-weight: bolder;
+$toolbar-wp-title-font-weight: bolder;
 
 // Named Color Variables
 // --------------------------------------------------

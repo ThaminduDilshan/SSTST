@@ -1,3 +1,50 @@
+
 page-home {
+
+    .bg_content {
+        background: rgb(98, 190, 226);
+    }
+
+    #but_cont {
+        background: transparent;
+        padding: 0 0 0 0;
+    }
+
+    .but_top {
+        width: 42vw;
+        height: 20px;
+    }
+
+    video {
+        width: 90vw;
+        height: auto;
+        max-height: 90vw;
+    }
+
+    .but_tr {
+        width: 90vw;
+    }
+
+    .txt_cont {
+        background: white;
+        width: 86vw;
+        height: auto;
+        padding: 15px 15px;
+        box-shadow: none !important;
+        font-size: 18px;
+    }
+
+    .logo_img {
+        width: 40%;
+        margin-left: auto;
+        margin-right: auto;
+        opacity: 0.5;
+    }
+
+    .voice_btn {
+        // background: rgb(96, 194, 233);
+        background: rgb(243, 55, 55);
+        margin-left: 86%;
+    }
 
 }

@@ -1,22 +1,33 @@
 
 <ion-header>
   <ion-navbar style="text-align:center" transparent>
-    <ion-title>Sign To Speech Translator</ion-title>
+    <ion-title>Sinhala Sign To Speech</ion-title>
+    <ion-buttons end>
+      <button ion-button icon-only outline round (click)="help()">
+        <ion-icon name="help" color="light"></ion-icon>
+      </button>
+    </ion-buttons>
   </ion-navbar>
 </ion-header>
 
 
-<ion-content padding>
-  <button ion-button full (click)="captureVideo()">Capture Video</button>
-  <button ion-button full (click)="loadFromGallery()">Open Gallery</button>
+<ion-content padding class="bg_content">
+  <ion-item id="but_cont" no-lines>
+    <button ion-button round outline item-start class="but_top" (click)="captureVideo()" color="light">Capture Video</button>
+    <button ion-button round outline item-end class="but_top" (click)="loadFromGallery()" color="light">Open Gallery</button>
+  </ion-item>
   <br/>
   <video controls autoplay #myvideo (loadedmetadata)="getExecute($event)"></video>
-  <br/>
-  <button ion-button full (click)="evaluate()" [disabled]="videoDuration > noOfFrames">Translate</button>
-  <br/>
-  <ion-card *ngIf="pred_text_all!=''">
+  <br/><br/>
+  <button ion-button round outline class="but_tr" (click)="evaluate()" [disabled]="videoDuration > noOfFrames" color="light">Translate</button>
+  <br/><br/>
+  <ion-card class="txt_cont">
+    <img src="assets/imgs/1665896-5043.png" class="logo_img" *ngIf="pred_text_all == ''">
     <div>{{pred_text_all}}</div>
+    <br/>
+    <button ion-button (click)="playVoice()" icon-only [disabled]="pred_voice_all == ''" class="voice_btn">
+      <ion-icon name="microphone"></ion-icon>
+    </button>
   </ion-card>
-  <button ion-button (click)="playVoice()" [disabled]="pred_voice_all == ''">Play</button>
   
 </ion-content>

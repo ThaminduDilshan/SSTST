@@ -17,11 +17,13 @@ import { Camera, CameraOptions } from '@ionic-native/camera';
 
 import { MyApp } from './app.component';
 import { HomePage } from '../pages/home/home';
+import { HelpPage } from '../pages/help/help';
 
 @NgModule({
   declarations: [
     MyApp,
-    HomePage
+    HomePage,
+    HelpPage
   ],
   imports: [
     BrowserModule,
@@ -32,7 +34,8 @@ import { HomePage } from '../pages/home/home';
   bootstrap: [IonicApp],
   entryComponents: [
     MyApp,
-    HomePage
+    HomePage,
+    HelpPage
   ],
   providers: [
     StatusBar,

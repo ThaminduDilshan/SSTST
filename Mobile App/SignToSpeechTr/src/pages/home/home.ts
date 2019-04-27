@@ -10,6 +10,7 @@ import { Http, Headers, RequestOptions } from '@angular/http';
 import { TextToSpeech } from '@ionic-native/text-to-speech';
 import { Camera } from '@ionic-native/camera';
 import 'rxjs/add/operator/timeout';
+import { HelpPage } from '../help/help';
 
 
 @Component({
@@ -178,7 +179,7 @@ export class HomePage {
       ).catch(
         (err) => {
           console.log('API Error : ', JSON.stringify(err));
-          loading.dismiss();
+          loading.dismissAll();
           this.presentToast('Connection timeout', '2000');
           reject(JSON.stringify(err));
         }
@@ -229,16 +230,18 @@ export class HomePage {
           console.log("undefined");
         } else {
           await this.uploadImage_Json(result, res_img_name, loading).then(res=>{       // send to server
-            console.log("i = " + i + "  |  frames = " + this.noOfFrames);
+            
           }).catch(async err => {
             console.log("API Error :: 1");
             this.presentToast('Server not responding', '3000');
+            loading.dismissAll();
           });
         }
         
       }).catch(async err => {
         console.log("API Error :: 1");
         this.presentToast('Base64 reading error', '3000');
+        loading.dismissAll();
       });
     }
     
@@ -507,6 +510,11 @@ export class HomePage {
     this.toast.show(message, duration, 'bottom').subscribe(
       toast => { console.log(toast); }
     );
+  }
+
+  
+  help() {          // navigate to help page
+    this.navCtrl.push(HelpPage);
   }
 
 }
