@@ -9,6 +9,7 @@ import { Base64 } from '@ionic-native/base64';
 import { Http, Headers, RequestOptions } from '@angular/http';
 import { TextToSpeech } from '@ionic-native/text-to-speech';
 import { Camera } from '@ionic-native/camera';
+import 'rxjs/add/operator/timeout';
 
 
 @Component({
@@ -50,8 +51,9 @@ export class HomePage {
 
   }
 
+  /////////////////////////////////////////// Record or Upload Functions  //////////////////////////////////////////
 
-  captureVideo() {                                    // capture a new video using device camera
+  captureVideo() {                       // capture a new video using device camera
     let options: CaptureVideoOptions = {
       limit: 1,
       duration: 120   // not supported yet
@@ -97,7 +99,9 @@ export class HomePage {
   }
 
 
-  async getFramed() {                                  // devide video into frames
+  /////////////////////////////////////////// Predict Request Functions //////////////////////////////////////////
+
+  async getFramed() {                         // devide video into frames
     this.frame_requests = [];
 
     for(var i=0; i<=Number(this.videoDuration); i++) {
@@ -159,7 +163,7 @@ export class HomePage {
     let options = new RequestOptions({headers: headers});
 
     return new Promise(async (resolve, reject) => {
-      this.http.post('http://35.243.251.84:5000/predict', data, options).toPromise().then(
+      this.http.post('http://35.243.251.84:5000/predict', data, options).timeout(7000).toPromise().then(
         async (res) => {
           var response = res.json().split(':');
           console.log("RESPONSE : ", response);
@@ -175,7 +179,8 @@ export class HomePage {
         (err) => {
           console.log('API Error : ', JSON.stringify(err));
           loading.dismiss();
-          reject(err.json());
+          this.presentToast('Connection timeout', '2000');
+          reject(JSON.stringify(err));
         }
       );
     });
@@ -240,81 +245,7 @@ export class HomePage {
   }
 
 
-  async sendPredRequests(image_name) {      // send given prediction request to the server
-    let headers = new Headers(
-      { 'Content-Type' : 'application/json' }
-    );
-    let data = JSON.stringify(
-      {
-        client_id: this.client_id,
-        image_name: image_name
-      }
-    );
-    let options = new RequestOptions({headers: headers});
-
-    return new Promise(async (resolve, reject) => {
-      this.http.post('http://35.243.251.84:5000/check', data, options).toPromise().then(
-        async (res) => {
-          console.log('API Response : ', res.json());
-          resolve(res.json());
-        }
-      ).catch(
-        (err) => {
-          console.log('API Error : ', JSON.stringify(err));
-          reject(err.json());
-        }
-      );
-    });
-
-  }
-
-
-  async requestPredictions() {          // request all predictions from the server and add result to array
-    return new Promise(async (resolve, reject) => {
-      if(this.videoDuration < this.noOfFrames) {
-        this.predictions = [];
-        this.pred_text_all = '';
-        this.pred_voice_all = '';
-
-        while(true) {
-          if(this.frame_requests.length != 0) {               // while no more requests left
-            var ele = this.frame_requests.shift();
-            if(ele[1] < 6) {     // maximum 6 request send to the server, have sent less than 6
-              var waittime = Number(ele[1]);
-              if(ele[1] < 4) {    // if haven't attempted 4 times, wait only 1s
-                waittime = 1;
-              }
-              if(waittime != 0) {     // wait (1s x retries)
-                await this.delay(waittime * 1000);
-              }
-              this.sendPredRequests(ele[0]).then(async res => {
-                if(res.toString()=='wait') {      // If server haven't processed yet
-                  this.frame_requests.push( [ele[0], ele[1]+1] );
-                }else if(res.toString()=='none') {        //prediction accuracy < 50
-                  this.predictions.push( res );
-                }
-                else{
-                  this.predictions.push( res );       // [image_name, prediction]
-                }
-              }).catch(async err => {
-                console.log("API Error :: 2");
-                this.presentToast('Server not responding', '3000');
-              });
-            }else {       // maximum no of retries have sent
-              this.predictions.push( [ele[0], 'none'] );
-            }
-          } else{         // no more requests left
-            resolve(true);
-            break;
-          }
-        }
-      } else {      // not framed yet
-        reject(false);
-      }
-    });
-    
-  }
-
+  /////////////////////////////////////////// Generating Text Functions //////////////////////////////////////////
 
   async evaluate() {            // request result from the server and produce output
     if( Number(this.frame_requests.length) != Number(0)) {
@@ -391,6 +322,82 @@ export class HomePage {
   }
 
 
+  async sendPredRequests(image_name) {      // send given prediction request to the server
+    let headers = new Headers(
+      { 'Content-Type' : 'application/json' }
+    );
+    let data = JSON.stringify(
+      {
+        client_id: this.client_id,
+        image_name: image_name
+      }
+    );
+    let options = new RequestOptions({headers: headers});
+
+    return new Promise(async (resolve, reject) => {
+      this.http.post('http://35.243.251.84:5000/check', data, options).timeout(7000).toPromise().then(
+        async (res) => {
+          console.log('API Response : ', res.json());
+          resolve(res.json());
+        }
+      ).catch(
+        (err) => {
+          console.log('API Error : ', JSON.stringify(err));
+          reject(JSON.stringify(err));
+        }
+      );
+    });
+
+  }
+
+
+  async requestPredictions() {          // request all predictions from the server and add result to array
+    return new Promise(async (resolve, reject) => {
+      if(this.videoDuration < this.noOfFrames) {
+        this.predictions = [];
+        this.pred_text_all = '';
+        this.pred_voice_all = '';
+
+        while(true) {
+          if(this.frame_requests.length != 0) {               // while no more requests left
+            var ele = this.frame_requests.shift();
+            if(ele[1] < 6) {     // maximum 6 request send to the server, have sent less than 6
+              var waittime = Number(ele[1]);
+              if(ele[1] < 4) {    // if haven't attempted 4 times, wait only 1s
+                waittime = 1;
+              }
+              if(waittime != 0) {     // wait (1s x retries)
+                await this.delay(waittime * 1000);
+              }
+              this.sendPredRequests(ele[0]).then(async res => {
+                if(res.toString()=='wait') {      // If server haven't processed yet
+                  this.frame_requests.push( [ele[0], ele[1]+1] );
+                }else if(res.toString()=='none') {        //prediction accuracy < 50
+                  this.predictions.push( res );
+                }
+                else{
+                  this.predictions.push( res );       // [image_name, prediction]
+                }
+              }).catch(async err => {
+                console.log("API Error :: 2");
+                this.presentToast('Server not responding', '3000');
+              });
+            }else {       // maximum no of retries have sent
+              this.predictions.push( [ele[0], 'none'] );
+            }
+          } else{         // no more requests left
+            resolve(true);
+            break;
+          }
+        }
+      } else {      // not framed yet
+        reject(false);
+      }
+    });
+    
+  }
+
+
   async getIfDynamic(pred1, pred2, pred3) {              // check whether the given set form a dynamic sign
     return new Promise(async (resolve,reject) => {
       if( String(pred1).includes('&') ) {          // if contains '&'  represent more than one sign
@@ -444,6 +451,8 @@ export class HomePage {
   }
 
 
+  /////////////////////////////////////////// Voice Related Functions //////////////////////////////////////////
+
   async getVoiceScript() {          // request voice script from the server
       let headers = new Headers(
         { 'Content-Type' : 'application/json' }
@@ -457,7 +466,7 @@ export class HomePage {
       let options = new RequestOptions({headers: headers});
   
       return new Promise(async (resolve, reject) => {
-        this.http.post('http://35.243.251.84:5000/voice', data, options).toPromise().then(
+        this.http.post('http://35.243.251.84:5000/voice', data, options).timeout(7000).toPromise().then(
           async (res) => {
             console.log('API Voice Response : ', res.json());
             resolve(res.json());
@@ -465,7 +474,7 @@ export class HomePage {
         ).catch(
           (err) => {
             console.log('API Error : ', JSON.stringify(err));
-            reject(err.json());
+            reject(JSON.stringify(err));
           }
         );
       });
@@ -486,10 +495,13 @@ export class HomePage {
     
   }
 
-  
+
+  /////////////////////////////////////////// General Functions //////////////////////////////////////////
+
   delay(ms: number) {
     return new Promise( resolve => setTimeout(resolve, ms) );
   }
+
 
   presentToast(message: string, duration: string) {               // present a toast message
     this.toast.show(message, duration, 'bottom').subscribe(
