@@ -15,7 +15,9 @@ def getScript(inpString):       # returns voicescript for given input string (se
     loadMapping()
 
     for word in inpString.split(' '):
-        output += voiceMap.get(word.strip(), '') + ' , '
+        if word != ' ':
+            output += voiceMap.get(word.strip(), '') + "        "
+
     return output
  
 

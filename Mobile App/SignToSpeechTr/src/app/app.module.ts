@@ -13,6 +13,7 @@ import { UniqueDeviceID } from '@ionic-native/unique-device-id';
 import { Toast } from '@ionic-native/toast';
 import { Base64 } from '@ionic-native/base64';
 import { HttpModule } from '@angular/http';
+import { Camera, CameraOptions } from '@ionic-native/camera';
 
 import { MyApp } from './app.component';
 import { HomePage } from '../pages/home/home';
@@ -44,6 +45,7 @@ import { HomePage } from '../pages/home/home';
     UniqueDeviceID,
     Toast,
     Base64,
+    Camera,
     {provide: ErrorHandler, useClass: IonicErrorHandler}
   ]
 })

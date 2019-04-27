@@ -33,8 +33,8 @@ label_bin = "output/Sn_sign_language_lb.pickle"
 app = flask.Flask(__name__)
 
 ## Creating pools
-obj_detection_res = Queue(5)                # object detector resources (graph, index)
-predictor_res = Queue(5)                    # predictor resources (graph, model, lb)
+obj_detection_res = Queue(20)                # object detector resources (graph, index)
+predictor_res = Queue(20)                    # predictor resources (graph, model, lb)
 obj_detLock = threading.Lock()
 predLock = threading.Lock()
 
@@ -42,7 +42,7 @@ predLock = threading.Lock()
 threads = []
 
 # new tasks
-tasks = Queue(10)
+tasks = Queue(100)
 taskLock = threading.Lock()
 
 # processed tasks output [ key: client_id+'$'+image_name, value: (res_time, pred, accuracy) ]
@@ -52,7 +52,7 @@ pro_data_lock = threading.Lock()
 
 # load object detector and predictor resources
 def loadGraphModels():
-    for i in range(1, 6, 1):
+    for i in range(1, 21, 1):
 
         # load the detection graph and category index for object detector
         print("[INFO] loading neural network for hand detector {} ...".format(i))
@@ -83,7 +83,7 @@ def loadGraphModels():
 
 # create worker threads
 def create_threads():
-    for tid in range(1, 11, 1):  ## 1,11,1
+    for tid in range(1, 51, 1):  ## 1,11,1
         thread = pred.PredictThread(tid, 'thread_{}'.format(tid), tasks, taskLock, obj_detection_res, obj_detLock, predictor_res, predLock, processed_data, pro_data_lock)
         thread.start()
         threads.append(thread)
@@ -144,64 +144,75 @@ def create_cleaner():
 # route for prediction requests with images
 @app.route('/predict', methods=["POST"])
 def serve():
-    if flask.request.method == "POST":
-        rec_data = json.loads(flask.request.data.decode('utf-8'))
-        if 'image' in rec_data:
-            print("New Request => client id: " + rec_data['client_id'] + " | image_name: " + rec_data['image_name'])
+    try:
+        if flask.request.method == "POST":
+            rec_data = json.loads(flask.request.data.decode('utf-8'))
+            if 'image' in rec_data:
+                print("New Request => client id: " + rec_data['client_id'] + " | image_name: " + rec_data['image_name'])
 
-            tasks.put( ( rec_data['client_id'], b64decode(rec_data['image']), rec_data['image_name'] ) )
+                tasks.put( ( rec_data['client_id'], b64decode(rec_data['image']), rec_data['image_name'] ) )
 
-            response = "received:" + rec_data['image_name']
-            return flask.jsonify((response))
+                response = "received:" + rec_data['image_name']
+                return flask.jsonify((response))
+    except:
+        print("[ERROR] Error occured with prediction request ... !!!")
 
 
 
 # route for checking prediction results
 @app.route('/check', methods=["POST"])
 def ifDone():
-    if flask.request.method == "POST":
-        rec_data = json.loads(flask.request.data.decode('utf-8'))
-        cli_id = rec_data['client_id']
-        img_name = rec_data['image_name']
+    try:
+        if flask.request.method == "POST":
+            rec_data = json.loads(flask.request.data.decode('utf-8'))
+            cli_id = rec_data['client_id']
+            img_name = rec_data['image_name']
 
-        print("Processed Request => client id: " + cli_id + " | image_name: " + img_name)
+            print("Processed Request => client id: " + cli_id + " | image_name: " + img_name)
 
-        pro_data_lock.acquire()
-        ret = processed_data.get(cli_id + '$' + img_name, 'wait')
-        if not ret == 'wait':
-            del processed_data[cli_id + '$' + img_name]
-            if float(ret[2]) >= 40:         # prediction is equal more than 40%
-                # voice = v_map.getScript(ret[1])
-                ret = (img_name, ret[1])
-            else:
-                ret = (img_name, 'none')
+            pro_data_lock.acquire()
+            ret = processed_data.get(cli_id + '$' + img_name, 'wait')
+            if not ret == 'wait':
+                del processed_data[cli_id + '$' + img_name]
+                if float(ret[2]) >= 40:         # prediction is equal or more than 40%
+                    ret = (img_name, ret[1])
+                else:
+                    ret = (img_name, 'none')
 
-        pro_data_lock.release()
+            pro_data_lock.release()
 
-        return flask.jsonify(ret)
+            return flask.jsonify(ret)
+    except:
+        print("[ERROR] Error occured with result checking request ... !!!")
+    
 
 
 
 # route for checking prediction results
 @app.route('/voice', methods=["POST"])
 def getVoiceScript():
-    if flask.request.method == "POST":
-        rec_data = json.loads(flask.request.data.decode('utf-8'))
-        cli_id = rec_data['client_id']
-        text = rec_data['text']
+    try:
+        if flask.request.method == "POST":
+            rec_data = json.loads(flask.request.data.decode('utf-8'))
+            cli_id = rec_data['client_id']
+            text = rec_data['text']
 
-        print("Voice Request => client id: " + cli_id)
-        voice = v_map.getScript(text)
+            print("Voice Request => client id: " + cli_id)
+            voice = v_map.getScript(text)
 
-        return flask.jsonify(voice)
-
+            return flask.jsonify(voice)
+    except:
+        print("[ERROR] Error occured with voice script request ... !!!")
 
 
 
 if __name__ == "__main__":
-    print("[INFO] Server started...\n[INFO] Wait until thread creation finish (10 threads in total) ...")
-    loadGraphModels()
-    create_threads()
-    create_cleaner()
-    print("[INFO] Loading complete...\n[INFO] Server is running...")
-    app.run(host='0.0.0.0')
+    try:
+        print("[INFO] Server started...\n[INFO] Wait until thread creation finish (10 threads in total) ...")
+        loadGraphModels()
+        create_threads()
+        create_cleaner()
+        print("[INFO] Loading complete...\n[INFO] Server is running...")
+        app.run(host='0.0.0.0')
+    except:
+        print("[ERROR] Error in server initialization process ... !!!")
