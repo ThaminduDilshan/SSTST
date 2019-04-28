@@ -12,8 +12,10 @@
 
 
 <ion-content padding class="bg_content">
+  <div *ngIf="!previousNetStatus" class="netbar">OFFLINE</div>
+  
   <ion-item id="but_cont" no-lines>
-    <button ion-button round outline item-start class="but_top" (click)="captureVideo()" color="light">Capture Video</button>
+    <button ion-button round outline item-start class="but_top" (click)="captureVideo()" color="light">Record Video</button>
     <button ion-button round outline item-end class="but_top" (click)="loadFromGallery()" color="light">Open Gallery</button>
   </ion-item>
   <br/>

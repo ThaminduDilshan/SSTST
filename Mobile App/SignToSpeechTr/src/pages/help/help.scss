@@ -3,5 +3,55 @@ page-help {
     .bg_content {
         background: rgb(98, 190, 226);
     }
-    
+
+    h2 {
+        text-align:center;
+        color: white;
+        font-weight: bolder;
+    }
+
+    .logo_cont {
+        background: transparent;
+        box-shadow: none !important;
+    }
+
+    .logo_img {
+        width: 30%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .topic {
+        text-align:center;
+        color: white;
+        margin-top: -2px;
+        font-weight: 700;
+        font-size: medium;
+    }
+
+    .sub_head {
+        text-align:center;
+        font-weight: bolder;
+        font-size: large;
+        padding: 10px 0;
+        color: rgb(19, 16, 165);
+    }
+
+    .content-topic {
+        padding: 3px 10px;
+        font-weight: bold;
+        color: rgb(19, 16, 165);
+    }
+
+    .content {
+        text-align: justify;
+        padding: 3px 10px;
+        padding-bottom: 10px;
+        color: rgb(5, 126, 5);
+    }
+
+    span {
+        font-weight: bold;
+    }
+
 }

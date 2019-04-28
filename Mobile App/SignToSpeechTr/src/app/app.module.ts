@@ -14,6 +14,7 @@ import { Toast } from '@ionic-native/toast';
 import { Base64 } from '@ionic-native/base64';
 import { HttpModule } from '@angular/http';
 import { Camera, CameraOptions } from '@ionic-native/camera';
+import { Network } from '@ionic-native/network';
 
 import { MyApp } from './app.component';
 import { HomePage } from '../pages/home/home';
@@ -49,6 +50,7 @@ import { HelpPage } from '../pages/help/help';
     Toast,
     Base64,
     Camera,
+    Network,
     {provide: ErrorHandler, useClass: IonicErrorHandler}
   ]
 })

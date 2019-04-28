@@ -9,7 +9,7 @@ import { Base64 } from '@ionic-native/base64';
 import { Http, Headers, RequestOptions } from '@angular/http';
 import { TextToSpeech } from '@ionic-native/text-to-speech';
 import { Camera } from '@ionic-native/camera';
-import 'rxjs/add/operator/timeout';
+import { Network } from '@ionic-native/network';
 import { HelpPage } from '../help/help';
 
 
@@ -28,6 +28,7 @@ export class HomePage {
   noOfFrames: number = 0;
   thumbnailPath: string = null;
   isVideoSelected: boolean = false;
+  private previousNetStatus: boolean;
   
   frame_requests = [];     // sent image_names will be here [image_name, no of retries]
   predictions = [];       // received predictions will be here
@@ -37,7 +38,7 @@ export class HomePage {
   constructor(public navCtrl: NavController, private mediaCapture: MediaCapture,
     private videoEditor: VideoEditor, private uniqueDeviceID: UniqueDeviceID,
     private toast: Toast, private base64: Base64, private http: Http, private tts: TextToSpeech,
-    private camera: Camera, private loadingCtrl: LoadingController
+    private camera: Camera, private loadingCtrl: LoadingController, private network: Network
   ) {
 
   }
@@ -50,52 +51,77 @@ export class HomePage {
       console.log("Client ID Error : ", err);
     });
 
+    // check network connection
+    if(this.network.type == 'none') {
+      this.previousNetStatus = false;
+    } else {
+      this.previousNetStatus = true;
+    }
+    this.network.onDisconnect().subscribe(() => {     // network disconnected
+      if(this.previousNetStatus) {
+        this.previousNetStatus = false;
+      }
+    });
+    this.network.onConnect().subscribe(() => {     // network connected
+        if(!this.previousNetStatus) {
+          this.previousNetStatus = true;
+        }
+    });
+
   }
 
   /////////////////////////////////////////// Record or Upload Functions  //////////////////////////////////////////
 
   captureVideo() {                       // capture a new video using device camera
-    let options: CaptureVideoOptions = {
-      limit: 1,
-      duration: 120   // not supported yet
-    }
-    this.mediaCapture.captureVideo(options).then((res: MediaFile[]) => {
+    if(!this.previousNetStatus) {             // user is offline
+      this.presentToast("You need to be online", "3000");
+    } else {
+      let options: CaptureVideoOptions = {
+        limit: 1,
+        duration: 120   // not supported yet
+      }
+      this.mediaCapture.captureVideo(options).then((res: MediaFile[]) => {
 
-      this.pathToBeFramed = res[0].fullPath;
-      let videoData = JSON.stringify(res);
-      let res1 = JSON.parse(videoData);
-      this.videoURL = res1[0]['fullPath'];
-      
-      let video = this.myvideo.nativeElement;
-      video.src =  this.videoURL;
-      // video.play();
-      
-    }, (err) => {
-      console.log("ERROR", "error capturing video");
-    });
+        this.pathToBeFramed = res[0].fullPath;
+        let videoData = JSON.stringify(res);
+        let res1 = JSON.parse(videoData);
+        this.videoURL = res1[0]['fullPath'];
+        
+        let video = this.myvideo.nativeElement;
+        video.src =  this.videoURL;
+        // video.play();
+        
+      }, (err) => {
+        console.log("ERROR", "error capturing video");
+      });
+    }
   }
 
 
   loadFromGallery() {                 // select video from gallery
-    var options = {
-      quality: 50,
-      destinationType: (<any>window).Camera.DestinationType.FILE_URI,
-      sourceType: (<any>window).Camera.PictureSourceType.PHOTOLIBRARY,
-      mediaType: (<any>window).Camera.MediaType.VIDEO
-    }
+    if(!this.previousNetStatus) {             // user is offline
+      this.presentToast("You need to be online", "2000");
+    } else {
+      var options = {
+        quality: 50,
+        destinationType: (<any>window).Camera.DestinationType.FILE_URI,
+        sourceType: (<any>window).Camera.PictureSourceType.PHOTOLIBRARY,
+        mediaType: (<any>window).Camera.MediaType.VIDEO
+      }
 
-    this.camera.getPicture(options).then( (res) => {
-      console.log(res);
+      this.camera.getPicture(options).then( (res) => {
+        console.log(res);
 
-      this.pathToBeFramed = res;
-      this.videoURL = res;
-      let video = this.myvideo.nativeElement;
-      video.src =  this.videoURL;
-      video.play();
+        this.pathToBeFramed = res;
+        this.videoURL = res;
+        let video = this.myvideo.nativeElement;
+        video.src =  this.videoURL;
+        video.play();
 
-     }, (err) => {
+      }, (err) => {
       console.log("ERROR", "error loading video");
-     });
+      });
+    }
 
   }
 
@@ -164,7 +190,7 @@ export class HomePage {
     let options = new RequestOptions({headers: headers});
 
     return new Promise(async (resolve, reject) => {
-      this.http.post('http://35.243.251.84:5000/predict', data, options).timeout(7000).toPromise().then(
+      this.http.post('http://35.243.251.84:5000/predict', data, options).toPromise().then(
         async (res) => {
           var response = res.json().split(':');
           console.log("RESPONSE : ", response);
@@ -179,7 +205,7 @@ export class HomePage {
       ).catch(
         (err) => {
           console.log('API Error : ', JSON.stringify(err));
-          loading.dismissAll();
+          loading.dismiss();
           this.presentToast('Connection timeout', '2000');
           reject(JSON.stringify(err));
         }
@@ -234,7 +260,7 @@ export class HomePage {
           }).catch(async err => {
             console.log("API Error :: 1");
             this.presentToast('Server not responding', '3000');
-            loading.dismissAll();
+            loading.dismiss();
           });
         }
         
@@ -262,6 +288,7 @@ export class HomePage {
         if(res) {
           await this.delay(1000);
           console.log("=== Result ===", this.predictions);
+          this.frame_requests = [];
 
           // make final text by comparing each result
           var pred1, pred2, pred3;
@@ -277,16 +304,22 @@ export class HomePage {
               if( String(pred1).includes('_') ) {                   // possible dynamic sign
                 await this.getIfDynamic(pred1, pred2, pred3).then(async res => {        // check if dynamic
                   if( String(res).includes("_") ) {     // if dynamic
-                    this.pred_text_all += String(res).split('_')[0] + " ";
+                    if( String(res).split('_')[0] != undefined ) {
+                      this.pred_text_all += String(res).split('_')[0] + " ";
+                    }
                     i += 3;    // skip iterator for pred2, pred3
                   } else {      // not dynamic
-                    this.pred_text_all += String(res) + " ";
+                    if( String(res) != undefined ) {
+                      this.pred_text_all += String(res) + " ";
+                    }
                     i += 1;
                   }
                 });
 
               } else {      // static sign
-                this.pred_text_all += String(pred1) + " ";
+                if( String(pred1) != undefined ) {
+                  this.pred_text_all += String(pred1) + " ";
+                }
                 i += 1;
               }
             } else {        // pred1 is none
@@ -338,7 +371,7 @@ export class HomePage {
     let options = new RequestOptions({headers: headers});
 
     return new Promise(async (resolve, reject) => {
-      this.http.post('http://35.243.251.84:5000/check', data, options).timeout(7000).toPromise().then(
+      this.http.post('http://35.243.251.84:5000/check', data, options).toPromise().then(
         async (res) => {
           console.log('API Response : ', res.json());
           resolve(res.json());
@@ -469,7 +502,7 @@ export class HomePage {
       let options = new RequestOptions({headers: headers});
   
       return new Promise(async (resolve, reject) => {
-        this.http.post('http://35.243.251.84:5000/voice', data, options).timeout(7000).toPromise().then(
+        this.http.post('http://35.243.251.84:5000/voice', data, options).toPromise().then(
           async (res) => {
             console.log('API Voice Response : ', res.json());
             resolve(res.json());

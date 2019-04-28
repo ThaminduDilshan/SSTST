@@ -1,9 +1,52 @@
 <ion-header>
   <ion-navbar style="text-align:center" transparent>
-    <ion-title>help</ion-title>
+    <ion-title>User Help</ion-title>
   </ion-navbar>
 </ion-header>
 
 <ion-content padding class="bg_content">
-  <ion-card>HELP PAGE</ion-card>
+  <h2>SSTST</h2>
+  <ion-card class="logo_cont">
+    <img src="assets/imgs/1665896-about.png" class="logo_img">
+  </ion-card>
+  <p class="topic">Sinhala Sign To Speech Translator</p>
+  <ion-card style="margin-top: 5px">
+    <h3 class="sub_head">What is SSTST ?</h3>
+    <p class="content">
+      Sign language is a visual language use to communicate with people who are suffering from hearing loss and 
+      get little or no benefit from technology. Sign language typically involves with hand shapes, facial expression, 
+      gestures and body language. This app is capable of recognizing <span>hand gestures</span> involves in <span>Sri Lankan Sign Language</span>.
+    </p>
+  </ion-card>
+  <ion-card>
+    <h3 class="sub_head">How it works ?</h3>
+    <p class="content">
+      Application takes a video input, frame the video into thumbnail images, send to backend server and display the output.
+      Image recognition and gesture detection happen at the backend server.
+      <span>Active internet connection</span> is needed for the functionality.
+    </p>
+  </ion-card>
+  <ion-card>
+    <h3 class="sub_head">How to use ?</h3>
+    <h3 class="content-topic">Record a new video</h3>
+    <p class="content">
+      Click on "RECORD VIDEO" button to record a new video. Then device camera will be launched.
+      Accept the video after recording in order to upload it to the server.
+    </p>
+    <h3 class="content-topic">Upload a video from the gallery</h3>
+    <p class="content">
+      Click on "OPEN GALLERY" button to select a video from the device storage. After selecting the 
+      video, app will automatically upload it to the server.
+    </p>
+    <h3 class="content-topic">Translate the video</h3>
+    <p class="content">
+      Click on "TRANSLATE" button to generate the text. This button will be <span>disabled until you select a video</span>.
+    </p>
+    <h3 class="content-topic">Play audio</h3>
+    <p class="content">
+      You can play the audio by clicking on red microphone button. This button will be <span>disabled until you translate a video</span>.
+    </p>
+  </ion-card>
+  <br/>
+  <p style="text-align:center; color: white">SSTST 1.0 © 2019 Thamindu Dilshan</p>
 </ion-content>
