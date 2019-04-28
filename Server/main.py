@@ -19,6 +19,7 @@ from datetime import timedelta
 from base64 import b64decode
 import json
 import voicescript_map as v_map
+import sinhalascript_map as sn_map
 
 
 # variable definition
@@ -199,8 +200,9 @@ def getVoiceScript():
 
             print("Voice Request => client id: " + cli_id)
             voice = v_map.getScript(text)
+            sinhala_txt = sn_map.getScript(text)
 
-            return flask.jsonify(voice)
+            return flask.jsonify((voice, sinhala_txt))              # return voice along with sinhala text
     except:
         print("[ERROR] Error occured with voice script request ... !!!")
 

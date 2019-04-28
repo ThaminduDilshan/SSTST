@@ -25,6 +25,8 @@
   <br/><br/>
   <ion-card class="txt_cont">
     <img src="assets/imgs/1665896-5043.png" class="logo_img" *ngIf="pred_text_all == ''">
+    <div>{{pred_sn_txt}}</div>
+    <br/>
     <div>{{pred_text_all}}</div>
     <br/>
     <button ion-button (click)="playVoice()" icon-only [disabled]="pred_voice_all == ''" class="voice_btn">

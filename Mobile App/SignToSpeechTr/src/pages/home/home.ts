@@ -34,6 +34,7 @@ export class HomePage {
   predictions = [];       // received predictions will be here
   pred_text_all = '';     // final text will be here
   pred_voice_all = '';     // final voice script will be here
+  pred_sn_txt = '';       // final sinhala text (in sinhala font)
 
   constructor(public navCtrl: NavController, private mediaCapture: MediaCapture,
     private videoEditor: VideoEditor, private uniqueDeviceID: UniqueDeviceID,
@@ -159,6 +160,10 @@ export class HomePage {
     this.isVideoSelected = true;
     this.videoDuration = Number(event.target.duration);
     this.noOfFrames = 0;
+    
+    this.pred_text_all = '';
+    this.pred_voice_all = '';
+    this.pred_sn_txt = '';
 
     let loading = this.loadingCtrl.create({
       spinner: 'bubbles',
@@ -298,7 +303,7 @@ export class HomePage {
             pred2 = await this.getPred( 'capture' + String(i+1) );
             pred3 = await this.getPred( 'capture' + String(i+2) );
 
-            if(pred1=='undefined') {
+            if(pred1==undefined) {              
               i += 1;
             }else if(pred1!='none') {
               if( String(pred1).includes('_') ) {                   // possible dynamic sign
@@ -338,7 +343,8 @@ export class HomePage {
           loading1.present();
 
           await this.getVoiceScript().then(async res => {         // call request voice script function
-            this.pred_voice_all = String(res);
+            this.pred_voice_all = String(res[0]);                    // server returns voice script along with the sinhala text
+            this.pred_sn_txt = String(res[1]);
             loading1.dismissAll();
           }).catch(err => {
             loading1.dismissAll();
@@ -393,6 +399,7 @@ export class HomePage {
         this.predictions = [];
         this.pred_text_all = '';
         this.pred_voice_all = '';
+        this.pred_sn_txt = '';
 
         while(true) {
           if(this.frame_requests.length != 0) {               // while no more requests left
