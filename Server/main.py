@@ -53,7 +53,7 @@ pro_data_lock = threading.Lock()
 
 # load object detector and predictor resources
 def loadGraphModels():
-    for i in range(1, 21, 1):
+    for i in range(1, 21, 1):                   # (1, 21, 1)
 
         # load the detection graph and category index for object detector
         print("[INFO] loading neural network for hand detector {} ...".format(i))
@@ -74,7 +74,9 @@ def loadGraphModels():
         # load the graph, model and lb for predictor
         print("[INFO] loading neural network for predictor {} ...".format(i))
         model = load_model(model_)
-        lb = pickle.loads(open(label_bin, "rb").read())
+        pik_file = open(label_bin, "rb")
+        lb = pickle.loads(pik_file.read())
+        pik_file.close()
         graph = tf.get_default_graph()
 
         predLock.acquire()
@@ -84,7 +86,7 @@ def loadGraphModels():
 
 # create worker threads
 def create_threads():
-    for tid in range(1, 51, 1):  ## 1,11,1
+    for tid in range(1, 51, 1):  ## 1,51,1
         thread = pred.PredictThread(tid, 'thread_{}'.format(tid), tasks, taskLock, obj_detection_res, obj_detLock, predictor_res, predLock, processed_data, pro_data_lock)
         thread.start()
         threads.append(thread)
@@ -218,3 +220,5 @@ if __name__ == "__main__":
         app.run(host='0.0.0.0')
     except:
         print("[ERROR] Error in server initialization process ... !!!")
+
+
