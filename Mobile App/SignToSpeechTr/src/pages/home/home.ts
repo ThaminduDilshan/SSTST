@@ -26,7 +26,8 @@ export class HomePage {
   pathToBeFramed: any;
   videoDuration: number = 1;
   noOfFrames: number = 0;
-  thumbnailPath: string = null;
+  // thumbnailPath: string = null;
+  thumbnailPath: string = '/storage/emulated/0/Android/data/io.ionic.starter/files/files/videos/capture0.jpg';
   isVideoSelected: boolean = false;
   private previousNetStatus: boolean;
   
@@ -145,7 +146,9 @@ export class HomePage {
       console.log("framing at "+i+"s");
       
       this.videoEditor.createThumbnail(option).then(async res=>{
-        this.thumbnailPath = res;
+        if(res!=undefined) {
+          this.thumbnailPath = res;
+        }
       }).catch(err=>{
         console.log("Framing Error", err);
         this.presentToast('Video framing error', '3000');
