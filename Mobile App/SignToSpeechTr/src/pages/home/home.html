@@ -15,8 +15,8 @@
   <div *ngIf="!previousNetStatus" class="netbar">OFFLINE</div>
   
   <ion-item id="but_cont" no-lines>
-    <button ion-button round outline item-start class="but_top" (click)="captureVideo()" color="light">Record Video</button>
-    <button ion-button round outline item-end class="but_top" (click)="loadFromGallery()" color="light">Open Gallery</button>
+    <button ion-button round outline item-start class="but_top" (click)="captureVideo()" id="btn_1" color="light">Record Video</button>
+    <button ion-button round outline item-end class="but_top" (click)="loadFromGallery()" id="btn_2" color="light">Open Gallery</button>
   </ion-item>
   <br/>
   <video controls autoplay #myvideo (loadedmetadata)="getExecute($event)"></video>

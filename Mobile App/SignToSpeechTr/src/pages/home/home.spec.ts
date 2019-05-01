@@ -1,12 +1,13 @@
 import { async, TestBed, fakeAsync, flushMicrotasks, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
-import { IonicModule, Platform, NavController, NavParams } from 'ionic-angular';
+import { IonicModule, Platform, NavController, NavParams, LoadingController } from 'ionic-angular';
 import { StatusBar } from '@ionic-native/status-bar';
 import { SplashScreen } from '@ionic-native/splash-screen';
 import { 
     PlatformMock, StatusBarMock, SplashScreenMock, NavMock, 
     MediaCaptureMock, VideoEditorMock, UniqueDeviceIDMock, ToastMock, Base64Mock,
-    HttpMock, HeadersMock, RequestOptionsMock, TextToSpeechMock, CameraMock
+    HttpMock, HeadersMock, RequestOptionsMock, TextToSpeechMock, CameraMock,
+    LoadingMock
 } from '../../../test-config/mocks-ionic';
 import { HomePage } from './home';
 import { MediaCapture } from '@ionic-native/media-capture';
@@ -34,6 +35,11 @@ describe('Home Page', () => {
     let component;
     let de: DebugElement;
     let el: HTMLElement;
+    let eventMock = {
+        'target': {
+            'duration': '5'
+        }
+    }
 
     // setup the environment
     beforeEach(async(() => {
@@ -58,7 +64,8 @@ describe('Home Page', () => {
                 { provide: RequestOptions, useClass: RequestOptionsMock },
                 { provide: TextToSpeech, useClass: TextToSpeechMock },
                 { provide: Camera, useClass: CameraMock },
-                { provide: Network, useValue: NetworkStub }
+                { provide: Network, useValue: NetworkStub },
+                 { provide: LoadingController, useClass: LoadingMock }
             ]
         })
     }));
@@ -181,8 +188,96 @@ describe('Home Page', () => {
         expect(el.disabled).toBeFalsy();
     }));
 
-    // 
+    // captureVideo function should be called when button is click
+    it('should call captureVideo() when button is pressed', fakeAsync(() => {
+        component.ionViewDidLoad();
+        let btn = fixture.debugElement.query(By.css('#btn_1')).nativeElement;
+        let capVdoSpy = spyOn(component, 'captureVideo');
+        btn.click();
+        tick();
+        fixture.detectChanges();
+        expect(capVdoSpy).toHaveBeenCalled();
+    }));
 
+    // loadFromGallery function should be called when button is click
+    it('should call loadFromGallery() when button is pressed', fakeAsync(() => {
+        component.ionViewDidLoad();
+        let btn = fixture.debugElement.query(By.css('#btn_2')).nativeElement;
+        let capVdoSpy = spyOn(component, 'loadFromGallery');
+        btn.click();
+        tick();
+        fixture.detectChanges();
+        expect(capVdoSpy).toHaveBeenCalled();
+    }));
 
+    // getFramed and readImages functions should be called when getExecute function is called
+    it('should call getFramed() and readImages() orderly when a video is selected', fakeAsync(() => {
+        component.ionViewDidLoad();
+        flushMicrotasks();
+        let funcSpy = spyOn(component, 'getFramed');
+        let funcSpy2 = spyOn(component, 'readImages');
+        component.getExecute(eventMock);
+        fixture.detectChanges();
+        tick(350);
+        expect(funcSpy).toHaveBeenCalledBefore(funcSpy2);
+        expect(funcSpy2).toHaveBeenCalled();
+    }));
+
+    // functionality of uploadImage_Json function
+    it('should execute uploadImage_Json() without trouble', fakeAsync(() => {
+        component.ionViewDidLoad();
+        flushMicrotasks();
+        let loading = new LoadingMock;
+
+        component.uploadImage_Json('image', 'image_test', loading);
+        fixture.detectChanges();
+        tick();
+        expect(component['frame_requests']).toBeTruthy();
+    }));
+
+    // // requestPredictions function should be called when evaluate function is called and frame_requests are there
+    // it('should call requestPredictions() when evaluate() is called [when frame_requests not empty]', fakeAsync(() => {
+    //     component.ionViewDidLoad();
+    //     flushMicrotasks();
+    //     let funcSpy = spyOn(component, 'requestPredictions');
+    //     component['frame_requests'] = ['test_frame1'];
+    //     component.evaluate();
+    //     fixture.detectChanges();
+    //     tick();
+    //     expect(funcSpy).toHaveBeenCalled();
+    // }));
+
+    // requestPredictions function should not be called when evaluate function is called but no frame_requests
+    it('should not call requestPredictions() even when evaluate() is called [when frame_requests empty]', fakeAsync(() => {
+        component.ionViewDidLoad();
+        flushMicrotasks();
+        let funcSpy = spyOn(component, 'requestPredictions');
+        component['frame_requests'] = [];
+        component.evaluate();
+        fixture.detectChanges();
+        tick();
+        expect(funcSpy).not.toHaveBeenCalled();
+    }));
+
+    // functionality of sendPredRequests function
+    it('should execute sendPredRequests() without trouble', fakeAsync(() => {
+        component.ionViewDidLoad();
+        flushMicrotasks();
+        var ret = component.sendPredRequests('image1');
+        fixture.detectChanges();
+        tick();
+        expect(ret).toBeTruthy();
+    }));
+
+    // functionality of getPred function
+    it('getPred() function should return the valid result', fakeAsync(() => {
+        component.ionViewDidLoad();
+        component['predictions'] = [ ['img1','pred1'], ['img2','pred2'], ['img3','pred3'] ];
+        flushMicrotasks();
+        var rv = component.getPred('img2');
+        tick();
+        flushMicrotasks();
+        expect(rv).toBeDefined();
+    }));
 
 });

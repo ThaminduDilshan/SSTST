@@ -1,8 +1,9 @@
 import { StatusBar } from '@ionic-native/status-bar';
 import { SplashScreen } from '@ionic-native/splash-screen';
-import { Observable } from 'rxjs';
+import { Observable, BehaviorSubject } from 'rxjs';
 import { Network } from '@ionic-native/network';
 import { Injectable } from '@angular/core';
+import { Http } from '@angular/http';
 
 
 export class PlatformMock {
@@ -136,14 +137,27 @@ export class UniqueDeviceIDMock {
 }
 
 export class ToastMock {
+  public show(message, duration, location) {
+    return new BehaviorSubject({toast: 'show'});
+  }
 
 }
 
 export class Base64Mock {
+  public encodeFile(path): any {
+    return new Promise((resolve, reject) => {
+      resolve('testing-id,testing-data');
+    });
+  }
 
 }
 
-export class HttpMock {
+export class HttpMock{
+  public post(url: string, body: any, options?: any) {
+    return new BehaviorSubject({
+      'toPromise': new Promise( (resolve, reject) => { resolve('received:image_test') } )
+    });
+  }
 
 }
 
@@ -160,5 +174,22 @@ export class TextToSpeechMock {
 }
 
 export class CameraMock {
+
+}
+
+export class LoadingMock {
+  public create( {} ) {
+    return new LoadingMock();
+  }
+
+  public present() {
+  }
+
+  public dismiss() {
+  }
+
+  public dismissAll() {
+
+  }
 
 }
