@@ -324,7 +324,7 @@ export class HomePage {
                       this.pred_text_all += String(res).split('_')[0] + " ";
                     }
                     i += 3;    // skip iterator for pred2, pred3
-                    if( i == this.noOfFrames ) {         // if at last iteration, set to skip final two frames
+                    if( i >= this.noOfFrames - 2 ) {         // if at last iteration, set to skip final two frames
                       lastDone = true;
                     }
                   } else {      // not dynamic
@@ -344,8 +344,7 @@ export class HomePage {
             } else {        // pred1 is none
               i += 1;
             }
-
-            if(i==this.noOfFrames) {        // append last two frames if they haven't append yet
+            if(i==this.noOfFrames-2) {        // append last two frames if they haven't append yet
               if(!lastDone) {
                 if(pred2!=undefined) {      // for pred2
                   if( String(pred2).includes('&') ) {
