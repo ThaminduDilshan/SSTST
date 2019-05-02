@@ -159,6 +159,7 @@ def serve():
                 return flask.jsonify((response))
     except:
         print("[ERROR] Error occured with prediction request ... !!!")
+        return flask.jsonify('error')
 
 
 

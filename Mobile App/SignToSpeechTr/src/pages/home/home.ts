@@ -200,15 +200,21 @@ export class HomePage {
     return new Promise(async (resolve, reject) => {
       this.http.post('http://35.243.251.84:5000/predict', data, options).toPromise().then(
         async (res) => {
-          var response = res.json().split(':');
-          console.log("RESPONSE : ", response);
-          if( response[0].toString() == 'received' ) {
-            this.frame_requests.push( [response[1].toString(), 0] );        // [image_name, retries]
-            if(Number(this.frame_requests.length) == Number(this.noOfFrames)) {
-              loading.dismiss();
+          if( String(res.json()) != 'error' ) {
+            var response = res.json().split(':');
+            console.log("RESPONSE : ", response);
+            if( response[0].toString() == 'received' ) {
+              this.frame_requests.push( [response[1].toString(), 0] );        // [image_name, retries]
+              if(Number(this.frame_requests.length) == Number(this.noOfFrames)) {
+                loading.dismiss();
+              }
             }
+            resolve(res.json);
+          } else {
+            loading.dismiss();
+            this.presentToast('Server error', '2000');
+            reject('Error');
           }
-          resolve(res.json);
         }
       ).catch(
         (err) => {
@@ -291,7 +297,8 @@ export class HomePage {
         content: 'Translating Video...'
       });
       loading.present();
-
+      
+      await this.delay(2000);
       this.requestPredictions().then(async res => {
         if(res) {
           await this.delay(1000);
@@ -301,12 +308,13 @@ export class HomePage {
           // make final text by comparing each result
           var pred1, pred2, pred3;
           var i = 0;
+          var lastDone = false;
           while( i < this.noOfFrames-2 ) {
             pred1 = await this.getPred( 'capture' + String(i) );
             pred2 = await this.getPred( 'capture' + String(i+1) );
             pred3 = await this.getPred( 'capture' + String(i+2) );
 
-            if(pred1==undefined) {              
+            if(pred1==undefined) {
               i += 1;
             }else if(pred1!='none') {
               if( String(pred1).includes('_') ) {                   // possible dynamic sign
@@ -316,8 +324,11 @@ export class HomePage {
                       this.pred_text_all += String(res).split('_')[0] + " ";
                     }
                     i += 3;    // skip iterator for pred2, pred3
+                    if( i == this.noOfFrames ) {         // if at last iteration, set to skip final two frames
+                      lastDone = true;
+                    }
                   } else {      // not dynamic
-                    if( String(res) != undefined ) {
+                    if( String(res) != undefined && String(res) != 'undefined' ) {
                       this.pred_text_all += String(res) + " ";
                     }
                     i += 1;
@@ -332,6 +343,43 @@ export class HomePage {
               }
             } else {        // pred1 is none
               i += 1;
+            }
+
+            if(i==this.noOfFrames) {        // append last two frames if they haven't append yet
+              if(!lastDone) {
+                if(pred2!=undefined) {      // for pred2
+                  if( String(pred2).includes('&') ) {
+                    var arr2 = String(pred2).split('&');
+                    arr2.forEach(ele => {
+                      if(!ele.includes('_')) {
+                        this.pred_text_all += String(ele) + " ";
+                      }
+                    });
+                  } else {
+                    if(String(pred2).includes('_')) {
+                      //ignore
+                    } else {
+                      this.pred_text_all += String(pred2) + " ";
+                    }
+                  }
+                }
+                if(pred3!=undefined) {      // for pred3
+                  if( String(pred3).includes('&') ) {
+                    var arr3 = String(pred3).split('&');
+                    arr3.forEach(ele => {
+                      if(!ele.includes('_')) {
+                        this.pred_text_all += String(ele) + " ";
+                      }
+                    });
+                  } else {
+                    if(String(pred3).includes('_')) {
+                      //ignore
+                    } else {
+                      this.pred_text_all += String(pred3) + " ";
+                    }
+                  }
+                }
+              }
             }
 
           }
@@ -442,7 +490,7 @@ export class HomePage {
     });
     
   }
-
+  // pred1: eleven_2 | pred2: undefined | pred3: eight
 
   async getIfDynamic(pred1, pred2, pred3) {              // check whether the given set form a dynamic sign
     return new Promise(async (resolve,reject) => {
@@ -477,9 +525,21 @@ export class HomePage {
               if( String(pred3).includes( String(pred1).split('_')[0] ) ) {      // it's dynamic
                 resolve(String(pred1));
                 return;
+              } else {
+                resolve( String(undefined) );
+                return;
               }
+            } else {
+              resolve( String(undefined) );
+              return;
             }
+          } else {
+            resolve( String(undefined) );
+            return;
           }
+        } else {
+          resolve(pred1);
+          return;
         }
       }
     });
