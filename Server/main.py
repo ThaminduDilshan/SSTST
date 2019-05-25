@@ -26,8 +26,8 @@ import sinhalascript_map as sn_map
 MODEL_NAME = 'hand_region_graph'
 PATH_TO_FROZEN_GRAPH = 'object_detection/' + MODEL_NAME + '/frozen_inference_graph.pb'
 PATH_TO_LABELS = os.path.join('object_detection/training', 'object-detection.pbtxt')
-model_ = "output/Sn_sign_language_model.model"
-label_bin = "output/Sn_sign_language_lb.pickle"
+model_ = "output/retrained_graph.pb"
+label_file = "output/retrained_labels.txt"
 
 
 # initialize flask application
@@ -35,7 +35,7 @@ app = flask.Flask(__name__)
 
 ## Creating pools
 obj_detection_res = Queue(20)                # object detector resources (graph, index)
-predictor_res = Queue(20)                    # predictor resources (graph, model, lb)
+predictor_res = Queue(20)                    # predictor resources (graph, lb)
 obj_detLock = threading.Lock()
 predLock = threading.Lock()
 
@@ -53,7 +53,7 @@ pro_data_lock = threading.Lock()
 
 # load object detector and predictor resources
 def loadGraphModels():
-    for i in range(1, 21, 1):                   # (1, 21, 1)
+    for i in range(1, 11, 1):                   # (1, 21, 1)
 
         # load the detection graph and category index for object detector
         print("[INFO] loading neural network for hand detector {} ...".format(i))
@@ -73,20 +73,28 @@ def loadGraphModels():
 
         # load the graph, model and lb for predictor
         print("[INFO] loading neural network for predictor {} ...".format(i))
-        model = load_model(model_)
-        pik_file = open(label_bin, "rb")
-        lb = pickle.loads(pik_file.read())
-        pik_file.close()
-        graph = tf.get_default_graph()
+
+        graph = tf.Graph()
+        graph_def = tf.GraphDef()
+
+        with open(model_, "rb") as fmod:
+            graph_def.ParseFromString(fmod.read())
+        with graph.as_default():
+            tf.import_graph_def(graph_def)
+
+        label = []
+        proto_as_ascii_lines = tf.gfile.GFile(label_file).readlines()
+        for l in proto_as_ascii_lines:
+            label.append(l.rstrip())
 
         predLock.acquire()
-        predictor_res.put( (graph, model, lb) )
+        predictor_res.put( (graph, label) )
         predLock.release()
 
 
 # create worker threads
 def create_threads():
-    for tid in range(1, 51, 1):  ## 1,51,1
+    for tid in range(1, 21, 1):  ## 1,51,1
         thread = pred.PredictThread(tid, 'thread_{}'.format(tid), tasks, taskLock, obj_detection_res, obj_detLock, predictor_res, predLock, processed_data, pro_data_lock)
         thread.start()
         threads.append(thread)

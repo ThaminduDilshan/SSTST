@@ -13,10 +13,12 @@ import threading
 from queue import Queue
 from random import randint
 from datetime import datetime
+import numpy as np
 
 
-width = 70      # 32
-height = 70     # 32
+
+width = 299      # 32
+height = 299     # 32
 
 # object detector variables
 obj_detection_graph = None
@@ -24,26 +26,51 @@ obj_category_index = None
 
 # predictor variables
 graph = None
-model = None
-lb = None
+labels = None
+
+
+# read tensor from image (copied from a code in tensorflow tutorial)
+def read_tensor_from_image_file(file_name, input_height=299, input_width=299, input_mean=0, input_std=255):
+  input_name = "file_reader"
+  output_name = "normalized"
+  
+  file_reader = tf.read_file(file_name, input_name)
+  image_reader = tf.image.decode_jpeg(file_reader, channels=3, name="jpeg_reader")
+  
+  float_caster = tf.cast(image_reader, tf.float32)
+  dims_expander = tf.expand_dims(float_caster, 0)
+  resized = tf.image.resize_bilinear(dims_expander, [input_height, input_width])
+  normalized = tf.divide(tf.subtract(resized, [input_mean]), [input_std])
+  sess = tf.Session()
+  result = sess.run(normalized)
+
+  return result
+
 
 # predictor code (predict for the given image in system memory)
 def make_prediction(image_path, tname, image_name):
-    image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-    image = cv2.resize(image, (width, height))
-    image = image.astype("float") / 255.0       ## scale pixel values to [0, 1]
-    image = image.flatten()                     ## flatten the image
-    image = image.reshape((1, image.shape[0]))  ## add a batch
+    t = read_tensor_from_image_file(image_path)
+    input_layer = 'Placeholder'
+    output_layer = 'final_result'
 
-    # make a prediction
-    with graph.as_default():
-        preds = model.predict(image)
+    input_name = "import/" + input_layer
+    output_name = "import/" + output_layer
+    input_operation = graph.get_operation_by_name(input_name)
+    output_operation = graph.get_operation_by_name(output_name)
 
-    i = preds.argmax(axis=1)[0]         ## find largest probability
-    label = lb.classes_[i]
+    with tf.Session(graph=graph) as sess:
+        results = sess.run( output_operation.outputs[0], {input_operation.outputs[0]: t} )
+    results = np.squeeze(results)
 
-    print("Thread : "+ tname +"\t\tInput image : " + image_name + " \t|\tSign : " + str(label) + "\t|\tAccuracy : " + str(preds[0][i]*100))
-    return [str(label),str(preds[0][i]*100)]
+    top_k = results.argsort()[-1:][::-1]
+    pred_lbl = ''
+    pred_acc = ''
+    for i in top_k:
+        pred_lbl = labels[i]
+        pred_acc = float(results[i])*100
+
+    print("Thread : "+ tname +"\t\tInput image : " + image_name + " \t|\tSign : " + str(pred_lbl) + "\t|\tAccuracy : " + str(pred_acc))
+    return [str(pred_lbl), str(pred_acc)]
 
 
 # predict for a client request (if more than one detections from object detector, add the prediction with the highest accuracy)
@@ -120,7 +147,7 @@ def work(tname, workque, worklock, objdet_pool, objdet_lock, pred_pool, pred_loc
                 continue
             
             # process data
-            global obj_detection_graph, obj_category_index, graph, model, lb
+            global obj_detection_graph, obj_category_index, graph, labels
 
             # get object detector resource pack (graph, index)
             while True:
@@ -145,8 +172,7 @@ def work(tname, workque, worklock, objdet_pool, objdet_lock, pred_pool, pred_loc
                     if not pred_pool.empty():             # get predictor graph, model and lb
                         dt2 = pred_pool.get()
                         graph = dt2[0]
-                        model = dt2[1]
-                        lb = dt2[2]
+                        labels = dt2[1]
                         pred_lock.release()
                         break
                     else:                       # release lock if queue is empty
@@ -157,7 +183,10 @@ def work(tname, workque, worklock, objdet_pool, objdet_lock, pred_pool, pred_loc
             
             
             # do prediction
-            predict_request(dat_client_id, dat_image, tname, dat_img_name, output_dat, output_lock)
+            try:
+                predict_request(dat_client_id, dat_image, tname, dat_img_name, output_dat, output_lock)
+            except:
+                print("[ERROR] Error when predicting ... !!!")
             
             # release resources (object detector)
             objdet_lock.acquire()
@@ -166,5 +195,5 @@ def work(tname, workque, worklock, objdet_pool, objdet_lock, pred_pool, pred_loc
 
             # release resources (predictor)
             pred_lock.acquire()
-            pred_pool.put( (graph, model, lb) )
+            pred_pool.put( (graph, labels) )
             pred_lock.release()
