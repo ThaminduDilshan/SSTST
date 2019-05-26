@@ -510,7 +510,7 @@ export class HomePage {
     });
     
   }
-  // pred1: eleven_2 | pred2: undefined | pred3: eight
+
 
   async getIfDynamic(pred1, pred2, pred3) {              // check whether the given set form a dynamic sign
     return new Promise(async (resolve,reject) => {
