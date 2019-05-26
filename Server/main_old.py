@@ -7,7 +7,7 @@ except ImportError:
 
 import flask
 import threading
-import predict_input as pred
+import predict_input_old as pred
 import time
 import tensorflow as tf
 from object_detection.utils import label_map_util
@@ -86,7 +86,7 @@ def loadGraphModels():
 
 # create worker threads
 def create_threads():
-    for tid in range(1, 51, 1):  ## 1,51,1
+    for tid in range(1, 21, 1):  ## 1,51,1
         thread = pred.PredictThread(tid, 'thread_{}'.format(tid), tasks, taskLock, obj_detection_res, obj_detLock, predictor_res, predLock, processed_data, pro_data_lock)
         thread.start()
         threads.append(thread)
@@ -178,7 +178,7 @@ def ifDone():
             ret = processed_data.get(cli_id + '$' + img_name, 'wait')
             if not ret == 'wait':
                 del processed_data[cli_id + '$' + img_name]
-                if float(ret[2]) >= 40:         # prediction is equal or more than 40%
+                if float(ret[2]) >= 15:         # prediction is equal or more than 15% (40%)
                     ret = (img_name, ret[1])
                 else:
                     ret = (img_name, 'none')

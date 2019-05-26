@@ -186,7 +186,7 @@ def ifDone():
             ret = processed_data.get(cli_id + '$' + img_name, 'wait')
             if not ret == 'wait':
                 del processed_data[cli_id + '$' + img_name]
-                if float(ret[2]) >= 40:         # prediction is equal or more than 40%
+                if float(ret[2]) >= 15:         # prediction is equal or more than 15% (40%)
                     ret = (img_name, ret[1])
                 else:
                     ret = (img_name, 'none')

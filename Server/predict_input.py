@@ -69,7 +69,7 @@ def make_prediction(image_path, tname, image_name):
         pred_lbl = labels[i]
         pred_acc = float(results[i])*100
 
-    print("Thread : "+ tname +"\t\tInput image : " + image_name + " \t|\tSign : " + str(pred_lbl) + "\t|\tAccuracy : " + str(pred_acc))
+    # print("Thread : "+ tname +"\t\tInput image : " + image_name + " \t|\tSign : " + str(pred_lbl) + "\t|\tAccuracy : " + str(pred_acc))
     return [str(pred_lbl), str(pred_acc)]
 
 
@@ -89,16 +89,20 @@ def predict_request(client_id, image, threadname, image_name, output_dat, output
         pr_acc = make_prediction("../slicedhand/{}#sliced_image0.jpeg".format(threadname), threadname, image_name)
         pred = pr_acc[0].strip()
         accuracy = pr_acc[1].strip()
-    elif(detected_count>1):                         # if two hands captured, select the hand with highest accuracy
-        pred1 = make_prediction("../slicedhand/{}#sliced_image0.jpeg".format(threadname), threadname, image_name)
-        pred2 = make_prediction("../slicedhand/{}#sliced_image1.jpeg".format(threadname), threadname, image_name)
 
-        if( pred1[1] >= pred2[1] ):
-            pred = pred1[0].strip()
-            accuracy = pred1[1].strip()
-        else:
-            pred = pred2[0].strip()
-            accuracy = pred2[1].strip()
+    elif(detected_count>1):                         # if two or more hands captured, select the hand with highest accuracy
+        for i in range(0, detected_count, 1):
+            pred1 = make_prediction("../slicedhand/{}#sliced_image{}.jpeg".format(threadname, i), threadname, image_name)
+            
+            if(pred == ''):
+                pred = pred1[0].strip()
+                accuracy = pred1[1].strip()
+            else:
+                if( float(pred1[1]) > float(accuracy) ):
+                    pred = pred1[0].strip()
+                    accuracy = pred1[1].strip()
+
+    print("Thread : "+ threadname +"\t\tInput image : " + image_name + " \t|\tSign : " + str(pred) + "\t|\tAccuracy : " + str(accuracy))
 
     # add prediction to the output dictionary
     output_lock.acquire()
