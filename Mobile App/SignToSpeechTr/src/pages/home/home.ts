@@ -10,6 +10,7 @@ import { Http, Headers, RequestOptions } from '@angular/http';
 import { TextToSpeech } from '@ionic-native/text-to-speech';
 import { Camera } from '@ionic-native/camera';
 import { Network } from '@ionic-native/network';
+import moment from 'moment';
 import { HelpPage } from '../help/help';
 
 
@@ -30,6 +31,12 @@ export class HomePage {
   thumbnailPath: string = '/storage/emulated/0/Android/data/io.ionic.starter/files/files/videos/capture0.jpg';
   isVideoSelected: boolean = false;
   private previousNetStatus: boolean;
+  private startTime_upload: any;
+  private startTime_translate: any;
+  private timeElapsed_upload: any;
+  private timeElapsed_translate: any;
+  private upload_time: string = "0m 00s";
+  private translate_time: string = "0m 00s";
   
   frame_requests = [];     // sent image_names will be here [image_name, no of retries]
   predictions = [];       // received predictions will be here
@@ -174,6 +181,13 @@ export class HomePage {
     });
     loading.present();
 
+    this.startTime_upload = new Date().getTime();
+    this.startTime_translate = null;
+    this.timeElapsed_upload = null;
+    this.timeElapsed_translate = null;
+    this.upload_time = "0m 00s";
+    this.translate_time = "0m 00s";
+
     this.getFramed();             // execute video framing function
     await this.delay( Number(this.videoDuration) * 70 );   // 70 ms wait for 1s, 4.2s wait for 1 min
     loading.dismiss();
@@ -207,6 +221,8 @@ export class HomePage {
               this.frame_requests.push( [response[1].toString(), 0] );        // [image_name, retries]
               if(Number(this.frame_requests.length) == Number(this.noOfFrames)) {
                 loading.dismiss();
+                this.timeElapsed_upload = new Date().getTime() - this.startTime_upload;
+                this.upload_time = Math.floor(moment.duration(this.timeElapsed_upload).asMinutes()) + 'm ' + moment.utc(this.timeElapsed_upload).format("ss") + 's';
               }
             }
             resolve(res.json);
@@ -297,6 +313,8 @@ export class HomePage {
         content: 'Translating Video...'
       });
       loading.present();
+
+      this.startTime_translate = new Date().getTime();
       
       await this.delay(2000);
       this.requestPredictions().then(async res => {
@@ -385,6 +403,9 @@ export class HomePage {
 
           console.log("FINAL TEXT : ", this.pred_text_all);     // text generation finished
           loading.dismiss();
+
+          this.timeElapsed_translate = new Date().getTime() - this.startTime_translate;
+          this.translate_time = Math.floor(moment.duration(this.timeElapsed_translate).asMinutes()) + 'm ' + moment.utc(this.timeElapsed_translate).format("ss") + 's';
 
           let loading1 = this.loadingCtrl.create({
             spinner: 'bubbles',
