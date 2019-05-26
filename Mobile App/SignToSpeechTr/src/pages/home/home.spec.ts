@@ -86,7 +86,8 @@ describe('Home Page', () => {
         expect(component['videoURL']).toBeUndefined();
         expect(component['pathToBeFramed']).toBeUndefined();
         expect(component['videoDuration']).toEqual(1);
-        expect(component['thumbnailPath']).toBeNull();
+        // expect(component['thumbnailPath']).toBeNull();
+        expect(component['thumbnailPath']).toBe('/storage/emulated/0/Android/data/io.ionic.starter/files/files/videos/capture0.jpg');
         expect(component['isVideoSelected']).toBe(false);
         expect(component['previousNetStatus']).toBeUndefined();
         expect(component['frame_requests']).toEqual([]);
