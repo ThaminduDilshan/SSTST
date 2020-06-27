@@ -1,4 +1,5 @@
-# SSTST
+![SSTST](/logo_1.png)
+
 Sinhala sign language to speech translator app which works by communicating with a back-end server. (Initial development is only concerned with few signs).
 
 ## Introduction
