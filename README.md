@@ -9,6 +9,13 @@ This Sinhala sign to speech translator application can provide a useful solution
 ## Scope
 This project will cover the Sinhala sign language covering the categories such as numbers and WH questions (what, when, how, etc.). This project is only concerned about translating words in sign language.
 
+## Project Structure
+### Architecture Diagram
+![architecture diagram](images/architecture_diagram.png)
+
+### Class Diagram
+![class diagram](images/class_diagram.png)
+
 ## Dataset
 The sinhala sign dataset created for this project can be found in this link. Download the dataset, extract it and copy content to a folder named 'signs_dataset' inside the 'Server' folder.
 https://www.kaggle.com/thamindudilshan/sinhala-sign-language-dataset-tdj
